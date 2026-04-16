@@ -41,6 +41,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnRefreshScreen: View
     private lateinit var ivSettings: ImageView
     private lateinit var indexBarLayout: LinearLayout
+    private lateinit var indexBarContainer: View
     
     private lateinit var appAdapter: AppAdapter
     private var allAppsList = mutableListOf<AppInfo>()
@@ -51,11 +52,14 @@ class MainActivity : AppCompatActivity() {
     private var isShowingAllApps = false
     private var currentSelectedIndex = -1
     private var availableIndices = mutableListOf<String>()
+    
+    private var favColumns = 2
 
     companion object {
         private const val TAG = "PalmaLauncher"
         private const val PREFS_NAME = "LauncherPrefs"
         private const val KEY_FAVORITES = "favorites_list"
+        private const val KEY_COLUMNS = "fav_columns"
         private val POTENTIAL_INDICES = listOf("ㄱ", "ㄴ", "ㄷ", "ㄹ", "ㅁ", "ㅂ", "ㅅ", "ㅇ", "ㅈ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ", 
                                               "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "#")
     }
@@ -65,6 +69,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        favColumns = prefs.getInt(KEY_COLUMNS, 2)
 
         initViews()
         setupRecyclerView()
@@ -81,6 +86,7 @@ class MainActivity : AppCompatActivity() {
         btnRefreshScreen = findViewById(R.id.btnRefreshScreen)
         ivSettings = findViewById(R.id.ivSettings)
         indexBarLayout = findViewById(R.id.indexBarLayout)
+        indexBarContainer = findViewById(R.id.indexBarContainer)
         
         tvAllApps.text = "즐겨찾기"
     }
@@ -113,7 +119,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupIndexBar() {
         indexBarLayout.removeAllViews()
-        
         availableIndices.clear()
         POTENTIAL_INDICES.forEach { label ->
             val hasApp = allAppsList.any { app ->
@@ -133,7 +138,8 @@ class MainActivity : AppCompatActivity() {
         availableIndices.forEach { label ->
             val tv = TextView(this).apply {
                 text = label
-                textSize = 12f
+                textSize = 24f // 2x larger
+                setTypeface(null, Typeface.BOLD) // Bold
                 gravity = Gravity.CENTER
                 setTextColor(0xFF888888.toInt())
                 layoutParams = LinearLayout.LayoutParams(
@@ -147,10 +153,8 @@ class MainActivity : AppCompatActivity() {
 
         indexBarLayout.setOnTouchListener { v, event ->
             if (!isShowingAllApps) return@setOnTouchListener false
-            
             val y = event.y
             val height = v.height
-            
             when (event.action) {
                 MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
                     if (height > 0) {
@@ -172,31 +176,27 @@ class MainActivity : AppCompatActivity() {
                 else -> false
             }
         }
-        indexBarLayout.visibility = if (isShowingAllApps) View.VISIBLE else View.GONE
+        indexBarContainer.visibility = if (isShowingAllApps) View.VISIBLE else View.GONE
     }
 
     private fun applyWaveEffect(selectedIndex: Int) {
         for (i in 0 until indexBarLayout.childCount) {
             val tv = indexBarLayout.getChildAt(i) as TextView
             val dist = abs(i - selectedIndex)
-            
             val translationX = when (dist) {
-                0 -> -100f // Much stronger pop-out
-                1 -> -60f
-                2 -> -30f
-                3 -> -15f
+                0 -> -300f // 3x stronger
+                1 -> -180f
+                2 -> -90f
+                3 -> -45f
                 else -> 0f
             }
             tv.translationX = translationX
-            
             if (dist == 0) {
                 tv.setTextColor(0xFF000000.toInt())
-                tv.setTypeface(null, Typeface.BOLD)
-                tv.textSize = 20f // Larger selected text
+                tv.textSize = 32f // Larger when selected
             } else {
                 tv.setTextColor(0xFF888888.toInt())
-                tv.setTypeface(null, Typeface.NORMAL)
-                tv.textSize = 12f
+                tv.textSize = 24f
             }
         }
     }
@@ -206,8 +206,7 @@ class MainActivity : AppCompatActivity() {
             val tv = indexBarLayout.getChildAt(i) as TextView
             tv.translationX = 0f
             tv.setTextColor(0xFF888888.toInt())
-            tv.setTypeface(null, Typeface.NORMAL)
-            tv.textSize = 12f
+            tv.textSize = 24f
         }
         currentSelectedIndex = -1
     }
@@ -248,11 +247,8 @@ class MainActivity : AppCompatActivity() {
         if (!isShowingAllApps) {
             val totalHeight = recyclerViewApps.height
             if (totalHeight <= 0) return
-            val rows = when {
-                favoriteAppsList.size > 6 -> 4
-                favoriteAppsList.size > 4 -> 3
-                else -> 2
-            }
+            // Max apps logic: 1col:4, 2col:8, 3col:12. All lead to 4 rows.
+            val rows = 4
             appAdapter.setItemHeight(totalHeight / rows)
         }
     }
@@ -281,8 +277,15 @@ class MainActivity : AppCompatActivity() {
         favPackageList.forEach { pkg ->
             allAppsList.find { it.packageName == pkg }?.let { favoriteAppsList.add(it) }
         }
+        
+        // Apply Limit based on columns
+        val limit = favColumns * 4
+        if (favoriteAppsList.size > limit) {
+            favoriteAppsList = favoriteAppsList.take(limit).toMutableList()
+        }
+        
         if (favoriteAppsList.isEmpty() && allAppsList.isNotEmpty()) {
-            favoriteAppsList.addAll(allAppsList.take(6))
+            favoriteAppsList.addAll(allAppsList.take(limit.coerceAtMost(allAppsList.size)))
             saveFavorites()
         }
         updateDisplayList()
@@ -298,14 +301,17 @@ class MainActivity : AppCompatActivity() {
             recyclerViewApps.layoutManager = LinearLayoutManager(this)
             appAdapter.updateData(allAppsList, false)
             setupIndexBar()
-            indexBarLayout.visibility = View.VISIBLE
+            indexBarContainer.visibility = View.VISIBLE
             tvAllApps.text = "모든 앱"
+            // Add padding to avoid index bar overlap
+            recyclerViewApps.setPadding(24, 0, 60, 0)
         } else {
-            recyclerViewApps.layoutManager = GridLayoutManager(this, 2)
+            recyclerViewApps.layoutManager = GridLayoutManager(this, favColumns)
             calculateItemHeight()
             appAdapter.updateData(favoriteAppsList, true)
-            indexBarLayout.visibility = View.GONE
+            indexBarContainer.visibility = View.GONE
             tvAllApps.text = "즐겨찾기"
+            recyclerViewApps.setPadding(24, 0, 24, 0) // Balanced padding
         }
     }
 
@@ -342,22 +348,35 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showSettingsMenu() {
-        val options = arrayOf("앱 정보", "기본 런처 설정", "런처 삭제", "런처 재시작", "개인정보취급방침", "서비스이용약관", "오픈소스 라이선스", "GitHub 저장소")
+        val options = arrayOf("즐겨찾기 배치 설정", "앱 정보", "기본 런처 설정", "런처 삭제", "런처 재시작", "개인정보취급방침", "서비스이용약관", "GitHub 저장소")
         AlertDialog.Builder(this)
             .setTitle("런처 설정")
             .setItems(options) { _, which ->
                 when (which) {
-                    0 -> openAppInfo()
-                    1 -> openDefaultLauncherSettings()
-                    2 -> uninstallLauncher()
-                    3 -> restartLauncher()
-                    4 -> openUrl("https://github.com/bc1qwerty/palma-minimal-launcher/blob/main/PRIVACY.md")
-                    5 -> openUrl("https://github.com/bc1qwerty/palma-minimal-launcher/blob/main/TERMS.md")
-                    6 -> openUrl("https://github.com/bc1qwerty/palma-minimal-launcher/blob/main/LICENSE")
+                    0 -> showColumnSettings()
+                    1 -> openAppInfo()
+                    2 -> openDefaultLauncherSettings()
+                    3 -> uninstallLauncher()
+                    4 -> restartLauncher()
+                    5 -> openUrl("https://github.com/bc1qwerty/palma-minimal-launcher/blob/main/PRIVACY.md")
+                    6 -> openUrl("https://github.com/bc1qwerty/palma-minimal-launcher/blob/main/TERMS.md")
                     7 -> openUrl("https://github.com/bc1qwerty/palma-minimal-launcher")
                 }
             }
             .setNegativeButton("닫기", null)
+            .show()
+    }
+
+    private fun showColumnSettings() {
+        val cols = arrayOf("1단 (최대 4개)", "2단 (최대 8개)", "3단 (최대 12개)")
+        AlertDialog.Builder(this)
+            .setTitle("즐겨찾기 배치 선택")
+            .setSingleChoiceItems(cols, favColumns - 1) { dialog, which ->
+                favColumns = which + 1
+                prefs.edit().putInt(KEY_COLUMNS, favColumns).apply()
+                filterFavorites() // Will apply limits and refresh
+                dialog.dismiss()
+            }
             .show()
     }
 
@@ -400,9 +419,15 @@ class MainActivity : AppCompatActivity() {
                 .setMessage(actionText + "하시겠습니까?")
                 .setPositiveButton("확인") { _, _ ->
                     if (isFav) favoriteAppsList.removeAll { it.packageName == appInfo.packageName }
-                    else favoriteAppsList.add(appInfo)
+                    else {
+                        if (favoriteAppsList.size < favColumns * 4) {
+                            favoriteAppsList.add(appInfo)
+                        } else {
+                            Toast.makeText(this, "즐겨찾기가 가득 찼습니다.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                     saveFavorites()
-                    Toast.makeText(this, if (isFav) "제거됨" else "추가됨", Toast.LENGTH_SHORT).show()
+                    updateDisplayList()
                 }
                 .setNegativeButton("취소", null)
                 .show()

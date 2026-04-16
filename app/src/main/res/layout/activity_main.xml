@@ -74,27 +74,26 @@
         android:id="@+id/recyclerViewApps"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:paddingStart="24dp"
-        android:paddingEnd="0dp"
         android:clipToPadding="false"
         android:overScrollMode="never"
         app:layout_constraintTop_toBottomOf="@+id/headerLayout"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/indexBarContainer" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <FrameLayout
         android:id="@+id/indexBarContainer"
-        android:layout_width="50dp"
+        android:layout_width="60dp"
         android:layout_height="0dp"
+        android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@+id/headerLayout"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginEnd="8dp">
+        android:layout_marginEnd="4dp">
 
         <LinearLayout
             android:id="@+id/indexBarLayout"
-            android:layout_width="34dp"
+            android:layout_width="40dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical|end"
             android:orientation="vertical"
