@@ -1,4 +1,4 @@
-# Palma Minimal Launcher
+# E-ink Minimal Launcher
 
 A minimalist, E-ink friendly Android launcher designed for Boox Palma and similar devices.
 
@@ -15,6 +15,7 @@ A minimalist, E-ink friendly Android launcher designed for Boox Palma and simila
 
 ## Versioning
 
+- **v1.2.1**: Reduced index pop-out intensity and minor UI refinements.
 - **v1.2**: Fixed index bar layering (always on top), refined "wave" pop-out visibility.
 - **v1.1**: Added column selection (1/2/3), improved index bar aesthetics, and centered favorites layout.
 - **v1.0**: Initial stable release.
@@ -22,7 +23,7 @@ A minimalist, E-ink friendly Android launcher designed for Boox Palma and simila
 ## Installation
 
 ```bash
-adb install palma-launcher-v28.apk
+adb install e-ink-minimal-launcher-v1.2.1.apk
 ```
 
 ## License
