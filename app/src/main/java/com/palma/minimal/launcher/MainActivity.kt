@@ -119,6 +119,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupIndexBar() {
         indexBarLayout.removeAllViews()
+        
         availableIndices.clear()
         POTENTIAL_INDICES.forEach { label ->
             val hasApp = allAppsList.any { app ->
@@ -138,8 +139,8 @@ class MainActivity : AppCompatActivity() {
         availableIndices.forEach { label ->
             val tv = TextView(this).apply {
                 text = label
-                textSize = 24f // 2x larger
-                setTypeface(null, Typeface.BOLD) // Bold
+                textSize = 24f
+                setTypeface(null, Typeface.BOLD)
                 gravity = Gravity.CENTER
                 setTextColor(0xFF888888.toInt())
                 layoutParams = LinearLayout.LayoutParams(
@@ -184,16 +185,16 @@ class MainActivity : AppCompatActivity() {
             val tv = indexBarLayout.getChildAt(i) as TextView
             val dist = abs(i - selectedIndex)
             val translationX = when (dist) {
-                0 -> -300f // 3x stronger
-                1 -> -180f
-                2 -> -90f
-                3 -> -45f
+                0 -> -150f // Reduced intensity (half of 300)
+                1 -> -90f  // Half of 180
+                2 -> -45f  // Half of 90
+                3 -> -22f  // Half of 45
                 else -> 0f
             }
             tv.translationX = translationX
             if (dist == 0) {
                 tv.setTextColor(0xFF000000.toInt())
-                tv.textSize = 32f // Larger when selected
+                tv.textSize = 32f
             } else {
                 tv.setTextColor(0xFF888888.toInt())
                 tv.textSize = 24f
@@ -247,7 +248,6 @@ class MainActivity : AppCompatActivity() {
         if (!isShowingAllApps) {
             val totalHeight = recyclerViewApps.height
             if (totalHeight <= 0) return
-            // Max apps logic: 1col:4, 2col:8, 3col:12. All lead to 4 rows.
             val rows = 4
             appAdapter.setItemHeight(totalHeight / rows)
         }
@@ -277,13 +277,10 @@ class MainActivity : AppCompatActivity() {
         favPackageList.forEach { pkg ->
             allAppsList.find { it.packageName == pkg }?.let { favoriteAppsList.add(it) }
         }
-        
-        // Apply Limit based on columns
         val limit = favColumns * 4
         if (favoriteAppsList.size > limit) {
             favoriteAppsList = favoriteAppsList.take(limit).toMutableList()
         }
-        
         if (favoriteAppsList.isEmpty() && allAppsList.isNotEmpty()) {
             favoriteAppsList.addAll(allAppsList.take(limit.coerceAtMost(allAppsList.size)))
             saveFavorites()
@@ -303,7 +300,6 @@ class MainActivity : AppCompatActivity() {
             setupIndexBar()
             indexBarContainer.visibility = View.VISIBLE
             tvAllApps.text = "모든 앱"
-            // Add padding to avoid index bar overlap
             recyclerViewApps.setPadding(24, 0, 60, 0)
         } else {
             recyclerViewApps.layoutManager = GridLayoutManager(this, favColumns)
@@ -311,7 +307,7 @@ class MainActivity : AppCompatActivity() {
             appAdapter.updateData(favoriteAppsList, true)
             indexBarContainer.visibility = View.GONE
             tvAllApps.text = "즐겨찾기"
-            recyclerViewApps.setPadding(24, 0, 24, 0) // Balanced padding
+            recyclerViewApps.setPadding(24, 0, 24, 0)
         }
     }
 
@@ -374,7 +370,7 @@ class MainActivity : AppCompatActivity() {
             .setSingleChoiceItems(cols, favColumns - 1) { dialog, which ->
                 favColumns = which + 1
                 prefs.edit().putInt(KEY_COLUMNS, favColumns).apply()
-                filterFavorites() // Will apply limits and refresh
+                filterFavorites()
                 dialog.dismiss()
             }
             .show()
