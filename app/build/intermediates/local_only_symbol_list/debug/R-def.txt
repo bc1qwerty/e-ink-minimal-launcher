@@ -1,0 +1,15 @@
+R_DEF: Internal format may change without notice
+local
+id btnRefreshScreen
+id headerLayout
+id indexBarLayout
+id recyclerViewApps
+id tvAllApps
+id tvAppName
+id tvDateBattery
+id tvTime
+layout activity_main
+layout item_app
+mipmap ic_launcher
+mipmap ic_launcher_round
+style Theme.EinkLauncher
