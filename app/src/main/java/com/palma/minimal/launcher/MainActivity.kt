@@ -12,7 +12,6 @@ import android.net.Uri
 import android.os.BatteryManager
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -68,6 +67,14 @@ class MainActivity : AppCompatActivity() {
                                               "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "#")
     }
 
+    // Localized Strings
+    private val textFavorites: String get() = when (dateLocale) { "EN" -> "Favorites"; "JA" -> "お気に入り"; else -> "즐겨찾기" }
+    private val textAllApps: String get() = when (dateLocale) { "EN" -> "All Apps"; "JA" -> "すべてのアプリ"; else -> "모든 앱" }
+    private val textSettings: String get() = when (dateLocale) { "EN" -> "Launcher Settings"; "JA" -> "ランチャー設定"; else -> "런처 설정" }
+    private val textClose: String get() = when (dateLocale) { "EN" -> "Close"; "JA" -> "閉じる"; else -> "닫기" }
+    private val textConfirm: String get() = when (dateLocale) { "EN" -> "OK"; "JA" -> "確認"; else -> "확인" }
+    private val textCancel: String get() = when (dateLocale) { "EN" -> "Cancel"; "JA" -> "キャンセル"; else -> "취소" }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -94,7 +101,7 @@ class MainActivity : AppCompatActivity() {
         indexBarLayout = findViewById(R.id.indexBarLayout)
         indexBarContainer = findViewById(R.id.indexBarContainer)
         
-        tvAllApps.text = "즐겨찾기"
+        tvAllApps.text = textFavorites
     }
 
     private fun setupRecyclerView() {
@@ -319,14 +326,14 @@ class MainActivity : AppCompatActivity() {
             appAdapter.updateData(allAppsList, false)
             setupIndexBar()
             indexBarContainer.visibility = View.VISIBLE
-            tvAllApps.text = "모든 앱"
+            tvAllApps.text = textAllApps
             recyclerViewApps.setPadding(24, 0, 60, 0)
         } else {
             recyclerViewApps.layoutManager = GridLayoutManager(this, favColumns)
             calculateItemHeight()
             appAdapter.updateData(favoriteAppsList, true)
             indexBarContainer.visibility = View.GONE
-            tvAllApps.text = "즐겨찾기"
+            tvAllApps.text = textFavorites
             recyclerViewApps.setPadding(24, 0, 24, 0)
         }
     }
@@ -356,6 +363,7 @@ class MainActivity : AppCompatActivity() {
         val bm = getSystemService(BATTERY_SERVICE) as BatteryManager
         val batLevel = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
         tvDateBattery.text = String.format("%s | %d%%", dateFormat.format(currentTime), batLevel)
+        tvAllApps.text = if (isShowingAllApps) textAllApps else textFavorites
     }
 
     private fun setupListeners() {
@@ -374,9 +382,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showSettingsMenu() {
-        val options = arrayOf("즐겨찾기 배치 설정", "애니메이션 설정", "날짜 언어 설정", "앱 정보", "기본 런처 설정", "런처 삭제", "런처 재시작", "개인정보취급방침", "서비스이용약관", "GitHub 저장소")
+        val options = when (dateLocale) {
+            "EN" -> arrayOf("Grid Settings", "Animation Settings", "Language Settings", "App Info", "Default Launcher", "Uninstall Launcher", "Restart Launcher", "Privacy Policy", "Terms of Service", "GitHub")
+            "JA" -> arrayOf("グリッド設定", "アニメーション設定", "言語設定", "アプリ情報", "デフォルトランチャー", "アンインストール", "再起動", "プライバシーポリシー", "利用規約", "GitHub")
+            else -> arrayOf("즐겨찾기 배치 설정", "애니메이션 설정", "언어 설정", "앱 정보", "기본 런처 설정", "런처 삭제", "런처 재시작", "개인정보취급방침", "서비스이용약관", "GitHub 저장소")
+        }
         AlertDialog.Builder(this)
-            .setTitle("런처 설정")
+            .setTitle(textSettings)
             .setItems(options) { _, which ->
                 when (which) {
                     0 -> showColumnSettings()
@@ -391,11 +403,12 @@ class MainActivity : AppCompatActivity() {
                     9 -> openUrl("https://github.com/bc1qwerty/e-ink-minimal-launcher")
                 }
             }
-            .setNegativeButton("닫기", null)
+            .setNegativeButton(textClose, null)
             .show()
     }
 
     private fun showLocaleSettings() {
+        val title = when (dateLocale) { "EN" -> "Language Settings"; "JA" -> "言語設定"; else -> "언어 설정" }
         val options = arrayOf("한국어 (KO)", "English (EN)", "日本語 (JA)")
         val checkedItem = when (dateLocale) {
             "EN" -> 1
@@ -403,7 +416,7 @@ class MainActivity : AppCompatActivity() {
             else -> 0
         }
         AlertDialog.Builder(this)
-            .setTitle("날짜 언어 설정")
+            .setTitle(title)
             .setSingleChoiceItems(options, checkedItem) { dialog, which ->
                 dateLocale = when (which) {
                     1 -> "EN"
@@ -418,9 +431,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showColumnSettings() {
-        val cols = arrayOf("1단 (최대 4개)", "2단 (최대 8개)", "3단 (최대 12개)", "4단 (최대 16개)", "5단 (최대 20개)")
+        val title = when (dateLocale) { "EN" -> "Grid Settings"; "JA" -> "グリッド設定"; else -> "즐겨찾기 배치 선택" }
+        val cols = when (dateLocale) {
+            "EN" -> arrayOf("1 Column (Max 4)", "2 Columns (Max 8)", "3 Columns (Max 12)", "4 Columns (Max 16)", "5 Columns (Max 20)")
+            "JA" -> arrayOf("1列 (最大4個)", "2列 (最大8個)", "3列 (最大12個)", "4列 (最大16個)", "5列 (最大20個)")
+            else -> arrayOf("1단 (최대 4개)", "2단 (최대 8개)", "3단 (최대 12개)", "4단 (최대 16개)", "5단 (최대 20개)")
+        }
         AlertDialog.Builder(this)
-            .setTitle("즐겨찾기 배치 선택")
+            .setTitle(title)
             .setSingleChoiceItems(cols, favColumns - 1) { dialog, which ->
                 favColumns = which + 1
                 prefs.edit().putInt(KEY_COLUMNS, favColumns).apply()
@@ -431,14 +449,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showAnimationSettings() {
-        val options = arrayOf("애니메이션 끄기 (기본/저사양 권장)", "애니메이션 켜기 (고성능/Y700 권장)")
+        val title = when (dateLocale) { "EN" -> "Animation Settings"; "JA" -> "アニメーション設定"; else -> "애니메이션 설정" }
+        val options = when (dateLocale) {
+            "EN" -> arrayOf("Animation Off (Low Spec)", "Animation On (High Spec)")
+            "JA" -> arrayOf("アニメーション オフ (低スペック用)", "アニメーション オン (高スペック用)")
+            else -> arrayOf("애니메이션 끄기 (기본/저사양 권장)", "애니메이션 켜기 (고성능/Y700 권장)")
+        }
         val checkedItem = if (!isAnimationEnabled) 0 else 1
         AlertDialog.Builder(this)
-            .setTitle("애니메이션 설정")
+            .setTitle(title)
             .setSingleChoiceItems(options, checkedItem) { dialog, which ->
                 isAnimationEnabled = (which == 1)
                 prefs.edit().putBoolean(KEY_ANIMATION, isAnimationEnabled).apply()
-                Toast.makeText(this, if (isAnimationEnabled) "애니메이션이 켜졌습니다." else "애니메이션이 꺼졌습니다.", Toast.LENGTH_SHORT).show()
+                val toastMsg = when (dateLocale) {
+                    "EN" -> if(isAnimationEnabled) "Animation On" else "Animation Off"
+                    "JA" -> if(isAnimationEnabled) "アニメーション オン" else "アニメーション オフ"
+                    else -> if(isAnimationEnabled) "애니메이션이 켜졌습니다." else "애니메이션이 꺼졌습니다."
+                }
+                Toast.makeText(this, toastMsg, Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
             }
             .show()
@@ -451,7 +479,8 @@ class MainActivity : AppCompatActivity() {
             }
             startActivity(intent)
         } catch (e: Exception) {
-            Toast.makeText(this, "설정을 열 수 없습니다.", Toast.LENGTH_SHORT).show()
+            val msg = when (dateLocale) { "EN" -> "Cannot open settings"; "JA" -> "設定を開けません"; else -> "설정을 열 수 없습니다." }
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -466,7 +495,10 @@ class MainActivity : AppCompatActivity() {
     }
     private fun openUrl(url: String) {
         try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } 
-        catch (e: Exception) { Toast.makeText(this, "URL을 열 수 없습니다.", Toast.LENGTH_SHORT).show() }
+        catch (e: Exception) { 
+            val msg = when (dateLocale) { "EN" -> "Cannot open URL"; "JA" -> "URLを開けません"; else -> "URL을 열 수 없습니다." }
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() 
+        }
     }
     private fun onAppClicked(appInfo: AppInfo) {
         try {
@@ -482,33 +514,47 @@ class MainActivity : AppCompatActivity() {
                 try {
                     startActivity(it)
                 } catch (e2: Exception) {
-                    Toast.makeText(this, "앱을 실행할 수 없습니다.", Toast.LENGTH_SHORT).show()
+                    val msg = when (dateLocale) { "EN" -> "Cannot launch app"; "JA" -> "アプリを起動できません"; else -> "앱을 실행할 수 없습니다." }
+                    Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
                 }
             } ?: run {
-                Toast.makeText(this, "앱을 실행할 수 없습니다.", Toast.LENGTH_SHORT).show()
+                val msg = when (dateLocale) { "EN" -> "Cannot launch app"; "JA" -> "アプリを起動できません"; else -> "앱을 실행할 수 없습니다." }
+                Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
             }
         }
     }
     private fun onAppLongClicked(appInfo: AppInfo) {
         if (isShowingAllApps) {
             val isFav = favoriteAppsList.any { it.packageName == appInfo.packageName }
-            val actionText = if (isFav) "즐겨찾기에서 제거" else "즐겨찾기에 추가"
+            val actionText = if (isFav) {
+                when (dateLocale) { "EN" -> "Remove from Favorites"; "JA" -> "お気に入りから削除"; else -> "즐겨찾기에서 제거" }
+            } else {
+                when (dateLocale) { "EN" -> "Add to Favorites"; "JA" -> "お気に入りに追加"; else -> "즐겨찾기에 추가" }
+            }
+            val msg = when (dateLocale) { "EN" -> "$actionText?"; "JA" -> "${actionText}しますか？"; else -> "${actionText}하시겠습니까?" }
+            
             AlertDialog.Builder(this)
                 .setTitle(appInfo.name)
-                .setMessage(actionText + "하시겠습니까?")
-                .setPositiveButton("확인") { _, _ ->
-                    if (isFav) favoriteAppsList.removeAll { it.packageName == appInfo.packageName }
-                    else {
+                .setMessage(msg)
+                .setPositiveButton(textConfirm) { _, _ ->
+                    if (isFav) {
+                        favoriteAppsList.removeAll { it.packageName == appInfo.packageName }
+                        val tMsg = when(dateLocale) { "EN" -> "Removed"; "JA" -> "削除しました"; else -> "제거됨" }
+                        Toast.makeText(this, tMsg, Toast.LENGTH_SHORT).show()
+                    } else {
                         if (favoriteAppsList.size < favColumns * 4) {
                             favoriteAppsList.add(appInfo)
+                            val tMsg = when(dateLocale) { "EN" -> "Added"; "JA" -> "追加しました"; else -> "추가됨" }
+                            Toast.makeText(this, tMsg, Toast.LENGTH_SHORT).show()
                         } else {
-                            Toast.makeText(this, "즐겨찾기가 가득 찼습니다.", Toast.LENGTH_SHORT).show()
+                            val tMsg = when(dateLocale) { "EN" -> "Favorites full"; "JA" -> "お気に入りがいっぱいです"; else -> "즐겨찾기가 가득 찼습니다." }
+                            Toast.makeText(this, tMsg, Toast.LENGTH_SHORT).show()
                         }
                     }
                     saveFavorites()
                     updateDisplayList()
                 }
-                .setNegativeButton("취소", null)
+                .setNegativeButton(textCancel, null)
                 .show()
         }
     }
