@@ -2,6 +2,11 @@
 
 A minimalist, E-ink friendly Android launcher designed for Boox Palma, Leaf 3, Lenovo Y700, and similar devices.
 
+<p align="center">
+  <img src="assets/screenshot.png" width="300" alt="Launcher Screenshot" />
+  <img src="assets/photo.jpg" width="400" alt="Launcher on Device" />
+</p>
+
 ## Features
 
 - **Minimalist Design**: Clean interface optimized for E-ink displays and tablets.
