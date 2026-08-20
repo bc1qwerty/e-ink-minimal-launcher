@@ -1,0 +1,12 @@
+# Android / Gradle 빌드 산출물
+# ⚠2026-08-20 까지 app/build/ 1192개가 추적되고 있었다. 빌드할 때마다 작업트리가
+# 더러워져 "미커밋 158건"으로 보였고, 진짜 작업과 구분이 안 됐다.
+build/
+app/build/
+.gradle/
+local.properties
+*.iml
+.idea/
+captures/
+.externalNativeBuild/
+.cxx/
